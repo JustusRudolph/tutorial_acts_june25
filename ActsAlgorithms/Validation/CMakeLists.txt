@@ -7,6 +7,7 @@ target_sources(Validation
     PRIVATE
     src/ResPlotTool.cpp
     src/RootTrackFitterPerformanceWriter.cpp
+    src/RootTrackFinderPerformanceWriter.cpp
     # add more .cpp files here
 )
 
@@ -19,6 +20,14 @@ target_include_directories(Validation
 #        $<INSTALL_INTERFACE:include>
 )
 
+<<<<<<< Updated upstream
+=======
+# ----------------------------------------
+# Compile definitions
+# ----------------------------------------
+# Uncomment the line below to enable edge holes in track summary
+# target_compile_definitions(Validation PRIVATE ACTS_INCLUDE_EDGEHOLES)
+>>>>>>> Stashed changes
 
 find_library(ACTS_EXAMPLES_FRAMEWORK
     NAMES ActsExamplesFramework
@@ -30,11 +39,12 @@ find_library(ACTS_EXAMPLES_FRAMEWORK
 #link_directories(${CMAKE_PREFIX_PATH}/lib64)
 
 # ----------------------------------------
-# Link against Acts
+# Link against Acts and ExampleAlgorithms
 # ----------------------------------------
 target_link_libraries(Validation
     PUBLIC
     Acts::Core
     Acts::PluginRoot
     ${ACTS_EXAMPLES_FRAMEWORK}
+    ExampleAlgorithms
   )

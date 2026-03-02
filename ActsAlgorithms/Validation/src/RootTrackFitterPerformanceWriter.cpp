@@ -247,9 +247,16 @@ ProcessCode RootTrackFitterPerformanceWriter::writeT(
     // Fill the residual plots
     m_resPlotTool.fill(ctx.geoContext, ip->initialState(), fittedParameters);
     // Fill the trajectory summary info
+    #ifdef ACTS_INCLUDE_EDGEHOLES
+    m_trackSummaryPlotTool.fill(fittedParameters, track.nTrackStates(),
+                                track.nMeasurements(), track.nOutliers(),
+                                track.nHoles(), track.nEdgeHoles(),
+                                track.nSharedHits());
+    #else
     m_trackSummaryPlotTool.fill(fittedParameters, track.nTrackStates(),
                                 track.nMeasurements(), track.nOutliers(),
                                 track.nHoles(), track.nSharedHits());
+    #endif
   }
 
   // Fill the efficiency, defined as the ratio between number of tracks with

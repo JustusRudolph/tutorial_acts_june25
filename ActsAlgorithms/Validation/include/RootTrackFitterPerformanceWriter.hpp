@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "ResPlotTool.hpp"
+
 #include "Acts/Utilities/Logger.hpp"
 #include "ActsExamples/EventData/SimParticle.hpp"
 #include "ActsExamples/EventData/Track.hpp"
@@ -16,7 +18,6 @@
 #include "ActsExamples/Framework/ProcessCode.hpp"
 #include "ActsExamples/Framework/WriterT.hpp"
 #include "ActsExamples/Validation/EffPlotTool.hpp"
-#include "ResPlotTool.hpp"
 #include "ActsExamples/Validation/TrackSummaryPlotTool.hpp"
 
 #include <mutex>
@@ -89,4 +90,4 @@ class RootTrackFitterPerformanceWriter final
   TrackSummaryPlotTool m_trackSummaryPlotTool;
 };
 
-}  // namespace ActsExamples
+}  // namespace AliceActsTrk
