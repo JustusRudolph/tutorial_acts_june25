@@ -20,7 +20,7 @@ from acts.examples.reconstruction import (
     #    CKFPerformanceConfig,
     TrackSelectorConfig,
     addKalmanTracks,
-    addAmbiguityResolution,
+    # addAmbiguityResolution,
     AmbiguityResolutionConfig,
     CkfConfig,
     addVertexFitting,
@@ -422,6 +422,7 @@ def runFullChain(cfg=None, args=None):
         geoSelectionConfigFile=geo_dir / "../seedingConfigurations" / cfg.seeding.seedingLayers,
         seedingAlgorithm = SeedingAlgorithm.GridTriplet if cfg.seeding.seedingAlgo == "GridTriplet" else "TruthSmeared",
         outputDirRoot=outputDir,
+        # writeMatchingDetails=cfg.seeding.writeMatchingDetails, TODO: move to own addSeeding
     )
 
 
@@ -443,16 +444,18 @@ def runFullChain(cfg=None, args=None):
         outputDirRoot=outputDir,
         writeTrackSummary=cfg.tracking.writeTrackSummary,
         writeTrackStates=False,
+        writeMatchingDetails=cfg.tracking.writeMatchingDetails,
         logLevel=acts.logging.INFO
     )
 
-    s = addAmbiguityResolution(
+    s = alice3_writers.addAmbiguityResolution(
         s,
         AmbiguityResolutionConfig(
             maximumSharedHits=cfg.tracking.maxSharedHits,
             nMeasurementsMin=cfg.tracking.nMeasurementsMin
         ),
         outputDirRoot=outputDir,
+        writeMatchingDetails=cfg.tracking.writeMatchingDetails,
         logLevel=acts.logging.INFO,
     )
 
