@@ -18,6 +18,7 @@ from AliceActsPythonBindings import TrackTruthMatcher
 from AliceActsPythonBindings import HitRemoverAlgorithm
 from AliceActsPythonBindings import TrackMergerAlgorithm
 from AliceActsPythonBindings import RootTrackFitterPerformanceWriter
+from AliceActsPythonBindings import RootTrackFinderPerformanceWriter
 
 #Alice3 seeding
 import alice3.performance.seeding as alice3_seeding
@@ -199,6 +200,69 @@ def addCKFTracks(
 
     return s
 
+def addAmbiguityResolution(
+    s,
+    config: acts_reco.AmbiguityResolutionConfig = acts_reco.AmbiguityResolutionConfig(),
+    tracks: str = "tracks",
+    outputDirCsv: Optional[Union[Path, str]] = None,
+    outputDirRoot: Optional[Union[Path, str]] = None,
+    writeTrackSummary: bool = True,
+    writeTrackStates: bool = False,
+    writePerformance: bool = True,
+    writeCovMat=False,
+    writeMatchingDetails=False,
+    logLevel: Optional[acts.logging.Level] = None,
+) -> None:
+
+    customLogLevel = acts.examples.defaultLogging(s, logLevel)
+
+    alg = acts.examples.GreedyAmbiguityResolutionAlgorithm(
+        level=customLogLevel(),
+        inputTracks=tracks,
+        outputTracks="ambi_tracks",
+        **acts.examples.defaultKWArgs(
+            maximumSharedHits=config.maximumSharedHits,
+            nMeasurementsMin=config.nMeasurementsMin,
+            maximumIterations=config.maximumIterations,
+        ),
+    )
+    s.addAlgorithm(alg)
+    s.addWhiteboardAlias("tracks", alg.config.outputTracks)
+
+    matchAlg = acts.examples.TrackTruthMatcher(
+        level=customLogLevel(),
+        inputTracks=alg.config.outputTracks,
+        inputParticles="particles",
+        inputMeasurementParticlesMap="measurement_particles_map",
+        outputTrackParticleMatching="ambi_track_particle_matching",
+        outputParticleTrackMatching="ambi_particle_track_matching",
+        doubleMatching=True,
+    )
+    s.addAlgorithm(matchAlg)
+    s.addWhiteboardAlias(
+        "track_particle_matching", matchAlg.config.outputTrackParticleMatching
+    )
+    s.addWhiteboardAlias(
+        "particle_track_matching", matchAlg.config.outputParticleTrackMatching
+    )
+
+    addTrackWriters(
+        s,
+        name="ambi",
+        tracks=alg.config.outputTracks,
+        outputDirCsv=outputDirCsv,
+        outputDirRoot=outputDirRoot,
+        writeSummary=writeTrackSummary,
+        writeStates=writeTrackStates,
+        writeFitterPerformance=writePerformance,
+        writeFinderPerformance=writePerformance,
+        writeCovMat=writeCovMat,
+        writeMatchingDetails=writeMatchingDetails,
+        logLevel=logLevel,
+    )
+
+    return s
+
 
 def addTrackTruthMatcher(
         s : acts.examples.Sequencer,
@@ -316,20 +380,23 @@ def addTrackWriters(
             
         if writeFinderPerformance:
 
-            trackFinderPerfWriter = acts.examples.root.RootTrackFinderPerformanceWriter(
-                level=customLogLevel(),
-                inputTracks=tracks,
-                inputParticles="particles_selected",
-                inputTrackParticleMatching="track_particle_matching",
-                inputParticleTrackMatching="particle_track_matching",
-                inputParticleMeasurementsMap="particle_measurements_map",
-                effPlotToolConfig = alice3_plotting.effPlotToolConfig,
-                fakePlotToolConfig = alice3_plotting.fakePlotToolConfig,
-                duplicationPlotToolConfig = alice3_plotting.duplicationPlotToolConfig,
-                trackQualityPlotToolConfig = alice3_plotting.trackQualityPlotToolConfig,
-                trackSummaryPlotToolConfig = alice3_plotting.trackSummaryPlotToolConfig,
-                filePath=str(outputDirRoot / f"performance_finding_{name}.root"),
-                writeMatchingDetails=writeMatchingDetails,
+            finderConfig = RootTrackFinderPerformanceWriter.Config()
+            finderConfig.inputTracks = tracks
+            finderConfig.inputParticles = "particles_selected"
+            finderConfig.inputTrackParticleMatching = "track_particle_matching"
+            finderConfig.inputParticleTrackMatching = "particle_track_matching"
+            finderConfig.inputParticleMeasurementsMap = "particle_measurements_map"
+            finderConfig.effPlotToolConfig = alice3_plotting.effPlotToolConfig
+            finderConfig.fakePlotToolConfig = alice3_plotting.fakePlotToolConfig
+            finderConfig.duplicationPlotToolConfig = alice3_plotting.duplicationPlotToolConfig
+            finderConfig.trackQualityPlotToolConfig = alice3_plotting.trackQualityPlotToolConfig
+            finderConfig.trackSummaryPlotToolConfig = alice3_plotting.trackSummaryPlotToolConfig
+            finderConfig.filePath = str(outputDirRoot / f"performance_finding_{name}.root")
+            finderConfig.writeMatchingDetails = writeMatchingDetails
+            
+            trackFinderPerfWriter = RootTrackFinderPerformanceWriter(
+                finderConfig,
+                level=customLogLevel()
             )
             s.addWriter(trackFinderPerfWriter)
 
@@ -388,16 +455,20 @@ def addTrackPerformanceWriters(
     if not outputDirRoot.exists():
         outputDirRoot.mkdir()
 
+    finderConfig = RootTrackFinderPerformanceWriter.Config()
+    finderConfig.inputTracks = tracks
+    finderConfig.inputParticles = inputParticles
+    finderConfig.inputParticles = selectedParticles
+    finderConfig.inputTrackParticleMatching = "seed_particle_matching"
+    finderConfig.inputParticleTrackMatching = "particle_seed_matching"
+    finderConfig.inputParticleMeasurementsMap = "particle_measurements_map"
+    finderConfig.filePath = str(outputDirRoot / f"performance_seeding.root")
+    finderConfig.writeMatchingDetails = writeMatchingDetails
+
     sequence.addWriter(
-        acts.examples.root.RootTrackFinderPerformanceWriter(
-            level=customLogLevel(),
-            inputTracks=tracks,
-            inputParticles=selectedParticles,
-            inputTrackParticleMatching="seed_particle_matching",
-            inputParticleTrackMatching="particle_seed_matching",
-            inputParticleMeasurementsMap="particle_measurements_map",
-            filePath=str(outputDirRoot / f"performance_seeding.root"),
-            writeMatchingDetails=writeMatchingDetails,
+        RootTrackFinderPerformanceWriter(
+            finderConfig,
+            level=customLogLevel()
         )
     )
 
@@ -434,27 +505,26 @@ def addIterativeTracking(
         writeMatchingDetails: bool = False,
         ):
     
-    trackCollectionForMerging = ["seed-tracks"]
-    mergedTrackCollection = "seed-tracks-merged"
-    outputIndexingMaps = []
-    for iteration in range(1,iterations):
-        inputMeasurements = "measurements"
-        inputMeasurementParticlesMap="measurement_particles_map"
-        if iteration > 1:
-            inputMeasurements = "measurements_iter_"+str(iteration-1)
-            inputMeasurementParticlesMap = "measurement_particles_map_iter_"+str(iteration-1)
+        trackCollectionForMerging = ["seed-tracks"]
+        mergedTrackCollection = "seed-tracks-merged"
+        outputIndexingMaps = []
+        for iteration in range(1,iterations):
+            inputMeasurements = "measurements"
+            inputMeasurementParticlesMap="measurement_particles_map"
+            if iteration > 1:
+                inputMeasurements = "measurements_iter_"+str(iteration-1)
+                inputMeasurementParticlesMap = "measurement_particles_map_iter_"+str(iteration-1)
 
-        used_meas_idxs    = "used_meas_idxs_iter_"+str(iteration)
-        outputMeasurements= "measurements_iter_"+str(iteration)
-        outputSpacePoints = "spacepoints_iter_"+str(iteration)
-        outputMeasurementParticlesMap = "measurement_particles_map_iter_"+str(iteration)
-        outputParticleMeasurementsMap = "particle_measurements_map_iter_"+str(iteration)
-        outputIndexingMap = "measurement_indexingMap_iter_"+str(iteration)
+            used_meas_idxs    = "used_meas_idxs_iter_"+str(iteration)
+            outputMeasurements= "measurements_iter_"+str(iteration)
+            outputSpacePoints = "spacepoints_iter_"+str(iteration)
+            outputMeasurementParticlesMap = "measurement_particles_map_iter_"+str(iteration)
+            outputParticleMeasurementsMap = "particle_measurements_map_iter_"+str(iteration)
+            outputIndexingMap = "measurement_indexingMap_iter_"+str(iteration)
 
 
-        # Each iteration of tracking uses left over hits
+            # Each iteration of tracking uses left over hits
 
-<<<<<<< Updated upstream
             addHitRemoverAlgorithm(
                 s,
                 inputMeasurements=inputMeasurements,
@@ -509,83 +579,28 @@ def addIterativeTracking(
         
 
         addTrackTruthMatcher(
-=======
-        addHitRemoverAlgorithm(
->>>>>>> Stashed changes
             s,
-            inputMeasurements=inputMeasurements,
-            inputTracks=inputTracks,
-            inputMeasurementParticlesMap=inputMeasurementParticlesMap,
-            sortByOldIndex=True,
-            used_meas_idxs=used_meas_idxs,
-            outputMeasurements=outputMeasurements,
-            outputMeasurementParticlesMap=outputMeasurementParticlesMap,
-            outputParticleMeasurementsMap=outputParticleMeasurementsMap,
-            outputIndexingMap=outputIndexingMap,
-            logLevel=acts.logging.INFO)
-                    
-        alice3_seeding.addSeeding(
-            s,
-            trackingGeometry,
-            field,
-            geoSelectionConfigFile    = geo_dir / "../seedingConfigurations" / cfg.seeding.seedingLayers,
-            seedFinderConfigArg       = alice3_seeding.get_seed_finder_config(iteration),
-            seedFinderOptionsArg      = alice3_seeding.DefaultSeedFinderOptionsArg,
-            seedFilterConfigArg       = alice3_seeding.PavelSeedFilterConfigArg,
-            spacePointGridConfigArg   = alice3_seeding.PavelSpacePointGridConfigArg,
-            seedingAlgorithmConfigArg = alice3_seeding.PavelSeedingAlgorithmConfigArg,
-            outputDirRoot=outputDir,
-            initialSigmas=[
-                1 * u.mm,
-                1 * u.mm,
-                1 * u.degree,
-                1 * u.degree,
-                0.1 * u.e / u.GeV,
-                1 * u.ns,
-            ],
-            initialSigmaPtRel=0.1,
-            initialVarInflation=alice3_seeding.PavelInitialVarInflation,
-            particleHypothesis=acts.ParticleHypothesis.pion,
-            inputMeasurements = outputMeasurements,
-            outputSpacePoints = outputSpacePoints,
-            iterationIndex = iteration,
-        )
-
-        # Add the seed tracks for merging and the measurement mapping for this iteration
-        trackCollectionForMerging.append("seed-tracks_iter_"+str(iteration))
-        outputIndexingMaps.append(outputIndexingMap)
-
-        
-    addTrackMerger(s,
-                    trackCollectionForMerging,
-                    outputIndexingMaps,
-                    mergedTrackCollection,
-                    acts.logging.DEBUG,
-                    )
-    
-
-    addTrackTruthMatcher(
-        s,
-        inputTracks=mergedTrackCollection,
-        inputParticles="particles_selected",
-        inputMeasurementParticlesMap="measurement_particles_map",
-        outputTrackParticleMatching="seed_merged_particle_matching",
-        outputParticleTrackMatching="particle_seed_merged_matching",
-    )
-    
-    
-    s.addWriter(
-        acts.examples.root.RootTrackFinderPerformanceWriter(
-            level=acts.logging.DEBUG,
             inputTracks=mergedTrackCollection,
             inputParticles="particles_selected",
-            inputTrackParticleMatching="seed_merged_particle_matching",
-            inputParticleTrackMatching="particle_seed_merged_matching",
-            inputParticleMeasurementsMap="particle_measurements_map",
-            effPlotToolConfig = alice3_plotting.effPlotToolConfig,
-            fakePlotToolConfig = alice3_plotting.fakePlotToolConfig,
-            filePath=str(outputDir / "performance_merged_seed.root"),
-            writeMatchingDetails=writeMatchingDetails,
+            inputMeasurementParticlesMap="measurement_particles_map",
+            outputTrackParticleMatching="seed_merged_particle_matching",
+            outputParticleTrackMatching="particle_seed_merged_matching",
         )
-    )
         
+        finderConfig = RootTrackFinderPerformanceWriter.Config()
+        finderConfig.inputTracks = mergedTrackCollection
+        finderConfig.inputParticles = "particles_selected"
+        finderConfig.inputTrackParticleMatching = "seed_merged_particle_matching"
+        finderConfig.inputParticleTrackMatching = "particle_seed_merged_matching"
+        finderConfig.inputParticleMeasurementsMap = "particle_measurements_map"
+        finderConfig.effPlotToolConfig = alice3_plotting.effPlotToolConfig
+        finderConfig.fakePlotToolConfig = alice3_plotting.fakePlotToolConfig
+        finderConfig.filePath = str(outputDir / "performance_merged_seed.root")
+        finderConfig.writeMatchingDetails = writeMatchingDetails
+        
+        s.addWriter(
+            RootTrackFinderPerformanceWriter(
+                finderConfig,
+                level=acts.logging.INFO
+            )
+        )  

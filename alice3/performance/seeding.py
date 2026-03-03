@@ -24,6 +24,9 @@ from acts.examples.reconstruction import (
     # SeedFilterMLDBScanConfig,
 )
 
+# Alice3 specific imports
+from AliceActsPythonBindings import RootTrackFinderPerformanceWriter
+
 
 ### Iterative tracking: seeding parameters ###
 minSeedPts = [0.4, 0.150, 0.07]
@@ -424,6 +427,7 @@ def addSeeding(
         outputSpacePoints = "spacepoints",
         outputSeeds       = "seeds",
         iterationIndex    = 0,
+        writeMatchingDetails: bool = False,
         
         
 ) -> None:
@@ -479,6 +483,8 @@ def addSeeding(
         logging level to override setting given in `s`
     rnd : RandomNumbers, None
         random number generator. Only used by SeedingAlgorithm.TruthSmeared.
+    writeMatchingDetails : bool
+        whether to write matching details tree in performance writer
     """
 
     collection_suffix=""
@@ -693,6 +699,7 @@ def addSeeding(
                 parEstimateAlg.config.outputTrackParameters,
                 trackFinderWriterOutName,
                 trackParamsWriterOutName,
+                writeMatchingDetails,
                 logLevel,
             )
 
@@ -743,6 +750,7 @@ def addSeedPerformanceWriters(
         outputTrackParameters: str,
         trackFinderWriterOutName : str,
         trackParamsWriterOutName : str,
+        writeMatchingDetails: bool = False,
         logLevel: acts.logging.Level = None,
 ):
     """Writes seeding related performance output"""
@@ -754,18 +762,21 @@ def addSeedPerformanceWriters(
     
     print("PF:: Adding RootTrackFinderPerformanceWriter on tracks: ", tracks)
     
+    finderConfig = RootTrackFinderPerformanceWriter.Config()
+    finderConfig.inputTracks=tracks,
+    finderConfig.inputParticles=selectedParticles,
+    finderConfig.inputTrackParticleMatching=inputTrackParticleMatching,
+    finderConfig.inputParticleTrackMatching=inputParticleTrackMatching,
+    finderConfig.inputParticleMeasurementsMap=inputParticleMeasurementsMap,
+    finderConfig.effPlotToolConfig = alice3_plotting.effPlotToolConfig,
+    finderConfig.fakePlotToolConfig = alice3_plotting.fakePlotToolConfig,
+    finderConfig.filePath=str(outputDirRoot / trackFinderWriterOutName),
+    finderConfig.writeMatchingDetails=writeMatchingDetails,
+
     sequence.addWriter(
-        acts.examples.root.RootTrackFinderPerformanceWriter(
-            #level=customLogLevel(),
-            level=acts.logging.DEBUG,
-            inputTracks=tracks,
-            inputParticles=selectedParticles,
-            inputTrackParticleMatching=inputTrackParticleMatching,
-            inputParticleTrackMatching=inputParticleTrackMatching,
-            inputParticleMeasurementsMap=inputParticleMeasurementsMap,
-            effPlotToolConfig = alice3_plotting.effPlotToolConfig,
-            fakePlotToolConfig = alice3_plotting.fakePlotToolConfig,
-            filePath=str(outputDirRoot / trackFinderWriterOutName),
+        RootTrackFinderPerformanceWriter(
+            finderConfig,
+            level=customLogLevel()
         )
     )
 
