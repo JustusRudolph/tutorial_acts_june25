@@ -67,12 +67,6 @@ inline void addExampleAlgorithm(pybind11::module& mex) {
                                inputParticles, inputTrackParticleMatching,
                                filePath, resPlotToolConfig, effPlotToolConfig,
                                trackSummaryPlotToolConfig);
-
-    ACTS_PYTHON_DECLARE_WRITER(RootTrackFitterPerformanceWriter, root,
-                               "RootTrackFitterPerformanceWriter", inputTracks,
-                               inputParticles, inputTrackParticleMatching,
-                               filePath, resPlotToolConfig, effPlotToolConfig,
-                               trackSummaryPlotToolConfig);
   }
 
   inline void addRootTrackFinderPerformanceWriter(pybind11::module& mex) {
