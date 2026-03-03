@@ -2,7 +2,7 @@ import os
 import sys
 
 from job_configs import ChainConfig
-from alice3_full_chain import runFullChain, getArgumentParser, runFullChain
+from alice3_full_chain import runFullChain, getArgumentParser
 
 
 class SuppressOutput:
@@ -78,6 +78,10 @@ def run_pt_scan(pid=211, eta_range=(-1,1), output_prefix="pt_scan"):
         
         # Modify output directory name to include scan info
         args.out_dir_prefix = f"{output_prefix}/{args.nEvents}Ev/{pt_label}"
+
+        # add writing of matching details
+        cfg.seeding.writeMatchingDetails = True
+        cfg.tracking.writeMatchingDetails = True
         
         # Run the full chain with modified config
         with SuppressOutput():

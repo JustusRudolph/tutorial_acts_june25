@@ -57,6 +57,7 @@ class seedingConfig:
     maxSeedsPerSpM: int = 2 
     filter_maxSeedsPerSpMConf: int = 1
     filter_maxQualitySeedsPerSpMConf: int = 1
+    writeMatchingDetails: bool = False
 
 @dataclass
 class trackingConfig:
@@ -72,6 +73,7 @@ class trackingConfig:
     stayOnSeed: bool = False
     twoWayCKF: bool = True
     writeTrackSummary: bool = True
+    writeMatchingDetails: bool = False
     
     
 class Config:
