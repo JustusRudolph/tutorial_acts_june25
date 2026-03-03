@@ -8,6 +8,7 @@
 
 #include "ResPlotTool.hpp"
 #include "RootTrackFitterPerformanceWriter.hpp"
+#include "RootTrackFinderPerformanceWriter.hpp"
 
 
 #include <algorithm>
@@ -66,18 +67,24 @@ inline void addExampleAlgorithm(pybind11::module& mex) {
                                inputParticles, inputTrackParticleMatching,
                                filePath, resPlotToolConfig, effPlotToolConfig,
                                trackSummaryPlotToolConfig);
+
+    ACTS_PYTHON_DECLARE_WRITER(RootTrackFitterPerformanceWriter, root,
+                               "RootTrackFitterPerformanceWriter", inputTracks,
+                               inputParticles, inputTrackParticleMatching,
+                               filePath, resPlotToolConfig, effPlotToolConfig,
+                               trackSummaryPlotToolConfig);
   }
 
-  // inline void addRootTrackFinderPerformanceWriter(pybind11::module& mex) {
-  //   ACTS_PYTHON_DECLARE_WRITER(AliceActsTrk::RootTrackFinderPerformanceWriter, mex,
-  //                              "RootTrackFinderPerformanceWriter", inputTracks,
-  //                              inputParticles, inputTrackParticleMatching,
-  //                              inputParticleTrackMatching, inputParticleMeasurementsMap,
-  //                              filePath, fileMode, effPlotToolConfig, fakePlotToolConfig,
-  //                              duplicationPlotToolConfig, trackSummaryPlotToolConfig,
-  //                              trackQualityPlotToolConfig, subDetectorTrackSummaryVolumes,
-  //                              writeMatchingDetails);
-  // }
+  inline void addRootTrackFinderPerformanceWriter(pybind11::module& mex) {
+    ACTS_PYTHON_DECLARE_WRITER(AliceActsTrk::RootTrackFinderPerformanceWriter, mex,
+                               "RootTrackFinderPerformanceWriter", inputTracks,
+                               inputParticles, inputTrackParticleMatching,
+                               inputParticleTrackMatching, inputParticleMeasurementsMap,
+                               filePath, fileMode, effPlotToolConfig, fakePlotToolConfig,
+                               duplicationPlotToolConfig, trackSummaryPlotToolConfig,
+                               trackQualityPlotToolConfig, subDetectorTrackSummaryVolumes,
+                               writeMatchingDetails);
+  }
   
   
   

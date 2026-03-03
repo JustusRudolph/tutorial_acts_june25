@@ -264,10 +264,16 @@ ProcessCode RootTrackFinderPerformanceWriter::writeT(
         track.createParametersAtReference();
 
     // Fill the trajectory summary info
+    #ifdef ACTS_INCLUDE_EDGEHOLES
     m_trackSummaryPlotTool.fill(fittedParameters, track.nTrackStates(),
                                 track.nMeasurements(), track.nOutliers(),
                                 track.nHoles(), track.nEdgeHoles(),
                                 track.nSharedHits());
+    #else
+    m_trackSummaryPlotTool.fill(fittedParameters, track.nTrackStates(),
+                                track.nMeasurements(), track.nOutliers(),
+                                track.nHoles(), track.nSharedHits());
+    #endif
 
     // Potentially fill other track summary caches for the given volumes
     for (const auto& [key, volumes] : m_cfg.subDetectorTrackSummaryVolumes) {
@@ -285,13 +291,21 @@ ProcessCode RootTrackFinderPerformanceWriter::writeT(
             static_cast<std::size_t>(state.typeFlags().isMeasurement());
         nOutliers += static_cast<std::size_t>(state.typeFlags().isOutlier());
         nHoles += static_cast<std::size_t>(state.typeFlags().isHole());
+        #ifdef ACTS_INCLUDE_EDGEHOLES
         nEdgeHoles += static_cast<std::size_t>(state.typeFlags().isEdgeHole());
+        #endif
         nSharedHits +=
             static_cast<std::size_t>(state.typeFlags().isSharedHit());
       }
+      #ifdef ACTS_INCLUDE_EDGEHOLES
       m_subDetectorSummaryTools.at(key).fill(fittedParameters, nTrackStates,
                                              nMeasurements, nOutliers, nHoles,
                                              nEdgeHoles,nSharedHits);
+      #else
+      m_subDetectorSummaryTools.at(key).fill(fittedParameters, nTrackStates,
+                                             nMeasurements, nOutliers, nHoles,
+                                             nSharedHits);
+      #endif
     }
 
     // Get the truth matching information
@@ -440,8 +454,14 @@ ProcessCode RootTrackFinderPerformanceWriter::writeT(
           continue;  // particle has no matched tracks
         }
         m_treeIsMatched.back() = true;
-        // vector of track indices per particle: first index is the non-duplicate match
+        // fill vector of track indices per particle
+        #ifdef ACTS_INCLUDE_DUPLICATES_IN_MATCHING
+        // With the new standard struct, track is a TrackIndexWithWeight
         m_matchedTrackIdxs.push_back({imatched->second.track.value().first});
+        #else
+        // old standard struct, track is an optional TrackIndex
+        m_matchedTrackIdxs.push_back({imatched->second.track.value()});
+        #endif
 
         // TODO: Duplicates can be added once TruthMatching structure has changed
         // in acts in general. Until then it stays commented out and only the

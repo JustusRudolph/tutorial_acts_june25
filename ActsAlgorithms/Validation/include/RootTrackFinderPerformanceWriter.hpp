@@ -8,10 +8,9 @@
 
 #pragma once
 
-#include "TruthMatching.hpp"
-
 #include "Acts/Utilities/Logger.hpp"
 #include "ActsExamples/EventData/Track.hpp"
+#include "ActsExamples/EventData/TruthMatching.hpp"
 #include "ActsExamples/Framework/DataHandle.hpp"
 #include "ActsExamples/Framework/ProcessCode.hpp"
 #include "ActsExamples/Framework/WriterT.hpp"

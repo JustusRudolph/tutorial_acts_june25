@@ -20,14 +20,13 @@ target_include_directories(Validation
 #        $<INSTALL_INTERFACE:include>
 )
 
-<<<<<<< Updated upstream
-=======
 # ----------------------------------------
 # Compile definitions
 # ----------------------------------------
 # Uncomment the line below to enable edge holes in track summary
 # target_compile_definitions(Validation PRIVATE ACTS_INCLUDE_EDGEHOLES)
->>>>>>> Stashed changes
+# Uncomment the line below to enable duplicates in truth matching
+# target_compile_definitions(Validation PRIVATE ACTS_INCLUDE_DUPLICATES_IN_MATCHING)
 
 find_library(ACTS_EXAMPLES_FRAMEWORK
     NAMES ActsExamplesFramework

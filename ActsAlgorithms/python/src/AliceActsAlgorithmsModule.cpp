@@ -25,6 +25,6 @@ PYBIND11_MODULE(AliceActsPythonBindings, mex) {
     // Validation
     AliceActsPython::addResPlotTool(mex);
     AliceActsPython::addRootTrackFitterPerformanceWriter(mex);
-    // AliceActsPython::addRootTrackFinderPerformanceWriter(mex);
+    AliceActsPython::addRootTrackFinderPerformanceWriter(mex);
     
 }
